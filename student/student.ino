@@ -1,57 +1,63 @@
 #include <SoftwareSerial.h>
 
-SoftwareSerial XBee(2, 3); // RX, TX
+SoftwareSerial XBee(2, 3);
 
-int BUTTON = 12;
-char ATMY = NULL;
+byte ON, OFF, ATMY = 0;
+byte ON_MASK = B10000000;
+byte OFF_MASK = B01000000;
+
+int BUTTON_PIN = 12;
 int BUTTON_STATE = LOW;
 
 void setup() {
   XBee.begin(9600);
   Serial.begin(9600);
-  pinMode(BUTTON, INPUT);
+  
+  pinMode(BUTTON_PIN, INPUT);
   pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop() {
-  if (ATMY == NULL) {
-
+  if (ATMY == 0) {
     // switch to AT mode
     XBee.print("+++");
-    delay(1000);
+    delay(100);
     
     // receive "OK"
     XBee.readString();
     
     // read ATMY
     XBee.print("ATMY\r");
-    ATMY = XBee.read();
+    delay(100);
     
-    Serial.println("ATMY: " + ATMY);
-  } else {
-    int state = digitalRead(BUTTON);
+    ATMY = XBee.read() - '0';
+    ON = ATMY | ON_MASK;
+    OFF = ATMY | OFF_MASK;
     
-    if (state != BUTTON_STATE) {
-      BUTTON_STATE = state;
+    Serial.print("ATMY: ");
+    Serial.println(ATMY);
 
-      if (state == HIGH) {
-        XBee.print(ATMY);
-        XBee.flush();
-        delay(100);
-      }
+    Serial.print("ON: ");
+    Serial.println(ON);
+
+    Serial.print("OFF: ");
+    Serial.println(OFF);
+  } else {
+    if (digitalRead(BUTTON_PIN) == HIGH) {
+      XBee.write(ATMY);
+      Serial.print("Sending ");
+      Serial.println(ATMY);
     }
     
     if (XBee.available()) { 
-      char message = XBee.read();
+      byte message = XBee.read();
       Serial.print("Received message: ");
       Serial.println(message);
-
-      if(message == ATMY) {
+      
+      if (message == ON) {
         Serial.println("Turning LED on");
         digitalWrite(LED_BUILTIN,HIGH);
-      } 
-      
-      if(message == ATMY) {
+      } else if (message == OFF) {      
         Serial.println("Turning LED off");
         digitalWrite(LED_BUILTIN,LOW);
       }

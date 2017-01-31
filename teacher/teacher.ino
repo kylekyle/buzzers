@@ -1,19 +1,31 @@
+#include <Wire.h>
+#include <LiquidCrystal.h>
 #include <SoftwareSerial.h>
 
-SoftwareSerial XBee(2, 3); // RX, TX
+SoftwareSerial XBee(2, 3);
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
-void setup() {
+bool READY = true;
+byte ON_MASK = B10000000;
+byte OFF_MASK = B01000000;
+
+void setup() {  
   XBee.begin(9600);
-  Serial.begin(9600);
+  lcd.begin(16, 2);
+  lcd.print("-IT105 Jeopardy-");
+  lcd.setCursor(0,1);
 }
 
 void loop() {
   if (XBee.available()) {
-    char buzz = XBee.read();
-    XBee.write(buzz);
-
-    while(XBee.available()) {
-      XBee.read();
+    byte buzzer = XBee.read();
+    
+    if (READY) {
+      XBee.write(buzzer | ON_MASK);
+      
+      lcd.setCursor(4,1);
+      lcd.write(buzzer + '0');
+      lcd.print(" BUZZED");      
     }
   }
 }
