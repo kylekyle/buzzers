@@ -8,6 +8,7 @@ byte OFF_MASK = B01000000;
 
 int BUTTON_PIN = 12;
 int BUTTON_STATE = LOW;
+unsigned long SLEEP_UNTIL = 0;
 
 void setup() {
   XBee.begin(9600);
@@ -36,7 +37,7 @@ void loop() {
     
     Serial.print("ATMY: ");
     Serial.println(ATMY);
-
+    
     Serial.print("ON: ");
     Serial.println(ON);
 
@@ -44,9 +45,13 @@ void loop() {
     Serial.println(OFF);
   } else {
     if (digitalRead(BUTTON_PIN) == HIGH) {
-      XBee.write(ATMY);
-      Serial.print("Sending ");
-      Serial.println(ATMY);
+      if (millis() > SLEEP_UNTIL) {
+        XBee.write(ATMY);
+        Serial.print("Sending ");
+        Serial.println(ATMY);
+      }
+
+      SLEEP_UNTIL = millis() + 1000;
     }
     
     if (XBee.available()) { 
