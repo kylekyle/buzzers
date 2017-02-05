@@ -1,52 +1,109 @@
-#include <Wire.h>
-#include <LiquidCrystal.h>
+// https://github.com/rweather/arduinolibs
+#include <LCD.h>
 #include <SoftwareSerial.h>
 
+LCD lcd;
 SoftwareSerial XBee(2, 3);
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
-
-byte ON_MASK = B10000000;
-byte OFF_MASK = B01000000;
 
 enum States {
-  Reading, Waiting, Judging
+  Reading, Waiting, Judging, Test
 };
 
 States STATE = Reading;
 
-void reading() {
-  lcd.clear();
-  lcd.print("-IT105 Jeopardy-");
-  lcd.setCursor(0,1);
-  lcd.print("<Test     Start>");
+byte ON_MASK  = B10000000;
+byte OFF_MASK = B01000000;
 
-  STATE = Reading;
-}
+byte ALL_ON   = B11111111;
+byte ALL_OFF  = B00000000;
 
-void judging(char buzzer) {
+void updateDisplay(String line1, String line2 = "") {
   lcd.clear();
-  lcd.setCursor(4,0);
-  lcd.print(buzzer);
-  lcd.print(" BUZZED");
+  lcd.setCursor(0,0);
+  lcd.print(line1);
   lcd.setCursor(0,1);
-  lcd.print("<Wrong    Right>");
-  
-  STATE = Judging;
+  lcd.print(line2);
 }
 
 void setup() {  
   XBee.begin(9600);
+  XBee.write(ALL_OFF);
+  
   lcd.begin(16, 2);
-  reading();
+  updateDisplay(" IT105 Jeopardy ","<Test     Start>");
 }
 
 void loop() {
-  if (XBee.available()) {
-    byte buzzer = XBee.read();
-    
-    if (STATE == Reading) {
-      XBee.write(buzzer | ON_MASK);
-      judging(buzzer + '0');
+  if (STATE == Reading) {
+    while (XBee.available()) {
+      XBee.read();
     }
+    
+    switch(lcd.getButton()) {
+      case LCD_BUTTON_LEFT:
+        STATE = Test;
+        break;
+      case LCD_BUTTON_SELECT:
+        STATE = Waiting;
+        XBee.write(ALL_ON);
+        updateDisplay("   Waiting ...  ","<Cancel");
+        break;
+    }
+  } 
+  
+  else if (STATE == Waiting) {
+    if (XBee.available()) {
+      STATE = Judging;
+      XBee.write(ALL_OFF);
+      
+      byte buzzer = XBee.read();
+      char buzzChar = buzzer + '0';
+      
+      XBee.write(buzzer | ON_MASK);
+      
+      updateDisplay(
+        String("    ") + buzzChar + " Buzzed    ", 
+        "<Wrong    Right>"
+      );
+    }
+
+    if (lcd.getButton() == LCD_BUTTON_LEFT) {
+      STATE = Reading;
+      XBee.write(ALL_OFF);
+      updateDisplay(" IT105 Jeopardy ","<Test     Start>");
+    }
+  } 
+  
+  else if (STATE == Judging) {
+    while (XBee.available()) {
+      XBee.read();
+    }
+    
+    switch(lcd.getButton()) {
+      case LCD_BUTTON_LEFT:
+        STATE = Waiting;
+        XBee.write(ALL_ON);
+        updateDisplay("   Waiting ...  ");
+        break;
+      case LCD_BUTTON_SELECT:
+        STATE = Reading;
+        XBee.write(ALL_OFF);
+        updateDisplay(" IT105 Jeopardy ","<Test     Start>");
+        break;
+    }
+  }
+
+  else if (STATE == Test) {
+    updateDisplay("   Testing ...  ");
+
+    for (int i=0; i<5; i++) {
+      XBee.write(ALL_ON);
+      delay(500);
+      XBee.write(ALL_OFF);
+      delay(500);
+    }
+
+    STATE = Reading;
+    updateDisplay(" IT105 Jeopardy ","<Test     Start>");
   }
 }

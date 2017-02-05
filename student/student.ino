@@ -1,10 +1,15 @@
+
 #include <SoftwareSerial.h>
 
 SoftwareSerial XBee(2, 3);
 
 byte ON, OFF, ATMY = 0;
-byte ON_MASK = B10000000;
+
+byte ON_MASK  = B10000000;
 byte OFF_MASK = B01000000;
+
+byte ALL_ON   = B11111111;
+byte ALL_OFF  = B00000000;
 
 int BUTTON_PIN = 12;
 int BUTTON_STATE = LOW;
@@ -59,10 +64,10 @@ void loop() {
       Serial.print("Received message: ");
       Serial.println(message);
       
-      if (message == ON) {
+      if (message == ON || message == ALL_ON) {
         Serial.println("Turning LED on");
         digitalWrite(LED_BUILTIN,HIGH);
-      } else if (message == OFF) {      
+      } else if (message == OFF || message == ALL_OFF) {
         Serial.println("Turning LED off");
         digitalWrite(LED_BUILTIN,LOW);
       }
