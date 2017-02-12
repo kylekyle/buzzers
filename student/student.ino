@@ -1,7 +1,6 @@
-
 #include <SoftwareSerial.h>
 
-SoftwareSerial XBee(2, 3);
+SoftwareSerial XBee(3,4); // RX,TX
 
 byte ON, OFF, ATMY = 0;
 
@@ -11,16 +10,17 @@ byte OFF_MASK = B01000000;
 byte ALL_ON   = B11111111;
 byte ALL_OFF  = B00000000;
 
-int BUTTON_PIN = 12;
+int LED_PIN = 5;
+int BUTTON_PIN = 6;
 int BUTTON_STATE = LOW;
 unsigned long SLEEP_UNTIL = 0;
 
 void setup() {
   XBee.begin(9600);
   Serial.begin(9600);
-  
+
+  pinMode(LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop() {
