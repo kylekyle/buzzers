@@ -54,7 +54,10 @@ void loop() {
   else if (STATE == Waiting) {
     if (XBee.available()) {
       STATE = Judging;
-      XBee.write(ALL_OFF);
+
+      for (int i=0; i<5; i++) {
+        XBee.write(ALL_OFF);
+      }
       
       byte buzzer = XBee.read();
       char buzzChar = buzzer + '0';
