@@ -1,6 +1,6 @@
 #include <SoftwareSerial.h>
 
-SoftwareSerial XBee(3,4); // RX,TX
+SoftwareSerial XBee(5,4); // RX,TX
 
 byte ON, OFF, ATMY = 0;
 
@@ -10,16 +10,16 @@ byte OFF_MASK = B01000000;
 byte ALL_ON   = B11111111;
 byte ALL_OFF  = B00000000;
 
-int BUTTON_PIN = 6;
-int BUTTON_STATE = LOW;
+int LED = 10;
+int BUTTON = 9;
 unsigned long SLEEP_UNTIL = 0;
 
 void setup() {
   XBee.begin(9600);
   Serial.begin(9600);
 
-  pinMode(BUTTON_PIN, INPUT);
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(BUTTON, INPUT);
+  pinMode(LED, OUTPUT);
 }
 
 void loop() {
@@ -48,7 +48,7 @@ void loop() {
     Serial.print("OFF: ");
     Serial.println(OFF);
   } else {
-    if (digitalRead(BUTTON_PIN) == HIGH) {
+    if (digitalRead(BUTTON) == HIGH) {
       if (millis() > SLEEP_UNTIL) {
         XBee.write(ATMY);
         Serial.print("Sending ");
@@ -65,10 +65,10 @@ void loop() {
       
       if (message == ON || message == ALL_ON) {
         Serial.println("Turning LED on");
-        digitalWrite(LED_BUILTIN,HIGH);
+        digitalWrite(LED,HIGH);
       } else if (message == OFF || message == ALL_OFF) {
         Serial.println("Turning LED off");
-        digitalWrite(LED_BUILTIN,LOW);
+        digitalWrite(LED,LOW);
       }
     }
   }
